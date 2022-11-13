@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
-from foodgram.settings import FILENAME
+from django.conf import settings
 from recipes.models import (
     Cart, Favorite, Ingredient, IngredientAmount,
     Recipe, Tag
@@ -88,7 +88,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        queryset = Recipe.objects.all()
 
         if user.is_authenticated:
             queryset = queryset.annotate(
@@ -154,5 +153,5 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredients__measurement_unit').annotate(total=Sum('amount'))
         shopping_cart = generate_shop_cart(ingredients)
         response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={FILENAME}'
+        response['Content-Disposition'] = f'attachment; {settings.FILENAME}'
         return response

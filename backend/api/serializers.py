@@ -32,7 +32,7 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientAmount
-        fields = ['id', 'ingredient', 'amount']
+        fields = ('id', 'ingredient', 'amount')
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -93,11 +93,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('author', 'tags', 'ingredients', 'name',
                   'image', 'text', 'cooking_time')
-
-    def get_ingredients(self, obj):
-        return obj.ingredients.values(
-            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
-        )
 
     def validate(self, data):
         ingredients = data.get('ingredients', None)
