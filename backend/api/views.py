@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
@@ -10,7 +11,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
-from django.conf import settings
 from recipes.models import (
     Cart, Favorite, Ingredient, IngredientAmount,
     Recipe, Tag
@@ -76,7 +76,6 @@ class FollowViewSet(UserViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     pagination_class = LimitPageNumberPagination
     filter_class = RecipeFilter
     permission_classes = (AdminUserOrReadOnly,)
