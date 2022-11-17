@@ -1,7 +1,7 @@
 <<<<<<< HEAD
 name: main
 
-on: push
+on: [push]
 
 jobs:
   tests:
