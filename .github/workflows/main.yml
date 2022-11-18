@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-name: main
+name: foodgram-project
 
 on: [push]
 
@@ -97,6 +96,3 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: ${{ github.workflow }} успешно выполнен!
-=======
-
->>>>>>> b059762c1b154429b9948589c5bf5c968a481d01
