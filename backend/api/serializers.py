@@ -126,14 +126,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         tags = validated_data['tags']
         for tag in tags:
             instance.tags.add(tag)
-        
+
         new_ingredients = []
         for ingredient in ingredients:
             adding_ingredient = IngredientAmount(
                 recipe=instance,
                 ingredients_id=ingredient.get('id'),
-                amount=ingredient.get('amount')         
-            ) 
+                amount=ingredient.get('amount')
+            )
             new_ingredients.append(adding_ingredient)
         IngredientAmount.objects.bulk_create(new_ingredients)
 

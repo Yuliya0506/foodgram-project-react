@@ -103,7 +103,6 @@ class IngredientAmount(models.Model):
         verbose_name='Количество',
     )
 
-
     class Meta:
         ordering = ['-id']
         verbose_name = 'Количество ингредиента'

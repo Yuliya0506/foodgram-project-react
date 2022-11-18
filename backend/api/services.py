@@ -5,4 +5,3 @@ def generate_shop_cart(ingredients):
             for ingredient in ingredients
         ])
     return shopping_cart
-    

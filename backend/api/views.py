@@ -20,7 +20,7 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
 from .serializers import (
-    FollowSerializer, IngredientSerializer, RecipeReadSerializer, 
+    FollowSerializer, IngredientSerializer, RecipeReadSerializer,
     RecipeWriteSerializer, ShortRecipeSerializer, TagSerializer
 )
 from .services import generate_shop_cart
@@ -141,7 +141,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(status=HTTPStatus.NO_CONTENT)
         return Response({
             'errors': 'Ошибка удаления рецепта из списка'
-        }, status=HTTPStatus.BAD_REQUEST)    
+        }, status=HTTPStatus.BAD_REQUEST)
 
     @action(
         detail=False, methods=['get'], permission_classes=[IsAuthenticated])
