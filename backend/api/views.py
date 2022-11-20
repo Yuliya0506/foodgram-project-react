@@ -63,6 +63,10 @@ class FollowViewSet(UserViewSet):
         if subscription.exists():
             subscription.delete()
             return Response(status=HTTPStatus.NO_CONTENT)
+        return Response(
+            {'errors': 'Вы не подписаны на данного автора'},
+            status=HTTPStatus.HTTP_400_BAD_REQUEST
+        )
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
@@ -77,7 +81,6 @@ class FollowViewSet(UserViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     pagination_class = LimitPageNumberPagination
     filter_class = RecipeFilter
     permission_classes = (AdminUserOrReadOnly,)
