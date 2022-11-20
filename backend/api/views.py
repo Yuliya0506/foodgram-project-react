@@ -60,8 +60,9 @@ class FollowViewSet(UserViewSet):
         subscription = Follow.objects.filter(
             user=request.user, author=user
         )
-        subscription.delete()
-        return Response(status=HTTPStatus.NO_CONTENT)
+        if subscription.exists():
+            subscription.delete()
+            return Response(status=HTTPStatus.NO_CONTENT)
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
