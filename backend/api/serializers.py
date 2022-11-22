@@ -184,19 +184,6 @@ class FollowSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
 
-    def validate(self, data):
-        user = data['user']
-        author = data['author']
-        if user == author:
-            return Response({
-                'errors': 'Ошибка подписки, нельзя подписываться на самого себя'},
-                status=HTTPStatus.BAD_REQUEST)
-        if Follow.objects.filter(user=user, author=author).exists():
-            return Response({
-                'errors': 'Ошибка подписки, вы уже подписаны на этого пользователя'},
-                status=HTTPStatus.BAD_REQUEST)
-        return data
-
     def get_is_subscribed(self, obj):
         return Follow.objects.filter(
             user=obj.user, author=obj.author

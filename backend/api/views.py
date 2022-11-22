@@ -48,40 +48,38 @@ class FollowViewSet(UserViewSet):
     @action(
         methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
-        if request.method == 'POST':
-            follow = Follow.objects.create(user=user, author=author)
-            serializer = FollowSerializer(follow, context={'request': request})
-            return Response(serializer.data, status=HTTPStatus.CREATED)
         user = request.user
         author = get_object_or_404(User, id=id)
-        return self.unsubscribe(user, author)
 
-    @staticmethod
-    def unsubscribe(user, author):
+        if user == author:
+            return Response({
+                'errors': 'Ошибка подписки, нельзя подписываться на себя'},
+                status=HTTPStatus.BAD_REQUEST)
+        if Follow.objects.filter(user=user, author=author).exists():
+            return Response({
+                'errors': 'Ошибка подписки, вы уже подписаны на пользователя'},
+                status=HTTPStatus.BAD_REQUEST)
+
+        follow = Follow.objects.create(user=user, author=author)
+        serializer = FollowSerializer(follow, context={'request': request})
+        return Response(serializer.data, status=HTTPStatus.CREATED)
+
+    @subscribe.mapping.delete
+    def del_subscribe(self, request, id=None):
+        user = request.user
+        author = get_object_or_404(User, id=id)
         if user == author:
             return Response(
-                {'errors': 'Вы не можете отписываться от самого себя'},
-                status=HTTPStatus.BAD_REQUEST
-            )
+                {'errors':
+                    'Ошибка отписки, нельзя отписываться от самого себя'},
+                status=HTTPStatus.BAD_REQUEST)
         follow = Follow.objects.filter(user=user, author=author)
-        if follow.exists():
-            follow.delete()
-            return Response(status=HTTPStatus.NO_CONTENT)
-        return Response(
-            {'errors': 'Вы не подписаны на данного автора'},
-            status=HTTPStatus.BAD_REQUEST
-        )
-
-    @action(detail=False, permission_classes=[IsAuthenticated])
-    def subscriptions(self, request):
-        user = request.user
-        queryset = Follow.objects.filter(user=user)
-        pages = self.paginate_queryset(queryset)
-        serializer = FollowSerializer(
-            pages, many=True,
-            context={'request': request}
-        )
-        return self.get_paginated_response(serializer.data)
+        if not follow.exists():
+            return Response({
+                'errors': 'Ошибка отписки, вы уже отписались'},
+                status=HTTPStatus.BAD_REQUEST)
+        follow.delete()
+        return Response(status=HTTPStatus.NO_CONTENT)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
