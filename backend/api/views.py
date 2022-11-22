@@ -48,24 +48,28 @@ class FollowViewSet(UserViewSet):
     @action(
         methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
+        if request.method == 'POST':
+            follow = Follow.objects.create(user=user, author=author)
+            serializer = FollowSerializer(follow, context={'request': request})
+            return Response(serializer.data, status=HTTPStatus.CREATED)
         user = request.user
         author = get_object_or_404(User, id=id)
-        follow = Follow.objects.create(user=user, author=author)
-        serializer = FollowSerializer(follow, context={'request': request})
-        return Response(serializer.data, status=HTTPStatus.CREATED)
+        return self.unsubscribe(user, author)
 
     @subscribe.mapping.delete
-    def unsubscribe(self, request, pk=None):
-        user = get_object_or_404(User, pk=pk)
-        subscription = Follow.objects.filter(
-            user=request.user, author=user
-        )
-        if subscription.exists():
-            subscription.delete()
+    def unsubscribe(user, author):
+        if user == author:
+            return Response(
+                {'errors': 'Вы не можете отписываться от самого себя'},
+                status=HTTPStatus.BAD_REQUEST
+            )
+        follow = Follow.objects.filter(user=user, author=author)
+        if follow.exists():
+            follow.delete()
             return Response(status=HTTPStatus.NO_CONTENT)
         return Response(
             {'errors': 'Вы не подписаны на данного автора'},
-            status=HTTPStatus.HTTP_400_BAD_REQUEST
+            status=HTTPStatus.BAD_REQUEST
         )
 
     @action(detail=False, permission_classes=[IsAuthenticated])
