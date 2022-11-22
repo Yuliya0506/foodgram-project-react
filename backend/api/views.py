@@ -56,7 +56,7 @@ class FollowViewSet(UserViewSet):
         author = get_object_or_404(User, id=id)
         return self.unsubscribe(user, author)
 
-    @subscribe.mapping.delete
+    @staticmethod
     def unsubscribe(user, author):
         if user == author:
             return Response(
