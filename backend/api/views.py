@@ -20,8 +20,9 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
 from .serializers import (
-    FollowSerializer, IngredientSerializer, RecipeReadSerializer,
-    RecipeWriteSerializer, ShortRecipeSerializer, TagSerializer
+    CustomUserSerializer, FollowSerializer, IngredientSerializer,
+    RecipeReadSerializer, RecipeWriteSerializer, ShortRecipeSerializer,
+    TagSerializer
 )
 from .services import generate_shop_cart
 
@@ -44,6 +45,8 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
 class FollowViewSet(UserViewSet):
     pagination_class = LimitPageNumberPagination
+    serializer_class = CustomUserSerializer
+    queryset = User.objects.all()
 
     @action(
         methods=['post'], detail=True, permission_classes=[IsAuthenticated])
