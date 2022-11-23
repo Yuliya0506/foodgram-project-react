@@ -49,7 +49,7 @@ class FollowViewSet(UserViewSet):
     queryset = User.objects.all()
 
     @action(
-        methods=['post'], detail=True, permission_classes=[IsAuthenticated])
+        methods=['post', 'delete'], detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
         if request.method == 'POST':
             data = {'user': request.user.id, 'author': id}
