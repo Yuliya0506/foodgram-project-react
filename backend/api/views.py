@@ -83,6 +83,18 @@ class FollowViewSet(UserViewSet):
             status=HTTPStatus.BAD_REQUEST
         )
 
+    @action(detail=False, permission_classes=[IsAuthenticated])
+    def subscriptions(self, request):
+        user = request.user
+        queryset = Follow.objects.filter(user=user)
+        pages = self.paginate_queryset(queryset)
+        serializer = FollowSerializer(
+            pages,
+            many=True,
+            context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)
+
 
 class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = LimitPageNumberPagination
