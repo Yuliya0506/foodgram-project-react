@@ -94,23 +94,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         fields = ('author', 'tags', 'ingredients', 'name',
                   'image', 'text', 'cooking_time')
 
-    def get_ingredients(self, obj):
-        return obj.ingredients.values(
-            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
-        )
-
     def validate(self, data):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
-            if type(ingredient.get('amount')) is str:
+            if isinstance(ingredient.get('amount'), str):
                 if not ingredient.get('amount').isdigit():
                     raise serializers.ValidationError(
-                        ('Количество ингредиента должно быть числом')
+                        'Количество ингредиента должно быть числом'
                     )
             if int(ingredient.get('amount')) <= 0:
                 raise serializers.ValidationError(
-                    ('Минимальное количество ингридиентов 1')
+                    'Минимальное количество ингредиентов 1'
                 )
             if int(data['cooking_time']) <= 0:
                 raise serializers.ValidationError(
@@ -125,18 +120,22 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         data['ingredients'] = ingredients
         return data
 
-    def add_tags_ingredients(self, instance, **validated_data):
+    @staticmethod
+    def __add_tags_ingredients(instance, **validated_data):
         ingredients = validated_data['ingredients']
         tags = validated_data['tags']
         for tag in tags:
             instance.tags.add(tag)
 
+        new_ingredients = []
         for ingredient in ingredients:
-            IngredientAmount.objects.create(
+            adding_ingredient = IngredientAmount(
                 recipe=instance,
                 ingredients_id=ingredient.get('id'),
-                amount=ingredient.get('amount'))
-        return instance
+                amount=ingredient.get('amount')
+            )
+            new_ingredients.append(adding_ingredient)
+        IngredientAmount.objects.bulk_create(new_ingredients)
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
@@ -145,7 +144,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             **validated_data,
             author=self.context.get('request').user
         )
-        return self.add_tags_ingredients(
+        return self.__add_tags_ingredients(
             recipe, ingredients=ingredients, tags=tags)
 
     def update(self, instance, validated_data):
@@ -156,7 +155,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.tags.clear()
         ingredients = validated_data.pop('ingredients')
         tags = self.initial_data.get('tags')
-        instance = self.add_tags_ingredients(
+        instance = self.__add_tags_ingredients(
             instance, ingredients=ingredients, tags=tags)
         return super().update(instance, validated_data)
 
@@ -184,19 +183,6 @@ class FollowSerializer(serializers.ModelSerializer):
         model = Follow
         fields = ('id', 'email', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
-
-    def validate(self, data):
-        user = data['user']
-        author = data['author']
-        if user == author:
-            return Response({
-                'errors': 'Ошибка подписки, нельзя подписываться на самого себя'},
-                status=HTTPStatus.BAD_REQUEST)
-        if Follow.objects.filter(user=user, author=author).exists():
-            return Response({
-                'errors': 'Ошибка подписки, вы уже подписаны на этого пользователя'},
-                status=HTTPStatus.BAD_REQUEST)
-        return data
 
     def get_is_subscribed(self, obj):
         return Follow.objects.filter(
