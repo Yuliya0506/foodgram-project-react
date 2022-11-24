@@ -100,14 +100,14 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
-            if isinstance(ingredient.get('amount'), str):
+            if type(ingredient.get('amount')) is str:
                 if not ingredient.get('amount').isdigit():
                     raise serializers.ValidationError(
-                        'Количество ингредиента должно быть числом'
+                        ('Количество ингредиента должно быть числом')
                     )
             if int(ingredient.get('amount')) <= 0:
                 raise serializers.ValidationError(
-                    'Минимальное количество ингредиентов 1'
+                    ('Минимальное количество ингридиентов 1')
                 )
             if int(data['cooking_time']) <= 0:
                 raise serializers.ValidationError(
@@ -122,22 +122,18 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         data['ingredients'] = ingredients
         return data
 
-    @staticmethod
-    def __add_tags_ingredients(instance, **validated_data):
+    def add_tags_ingredients(self, instance, **validated_data):
         ingredients = validated_data['ingredients']
         tags = validated_data['tags']
         for tag in tags:
             instance.tags.add(tag)
 
-        new_ingredients = []
         for ingredient in ingredients:
-            adding_ingredient = IngredientAmount(
+            IngredientAmount.objects.create(
                 recipe=instance,
                 ingredients_id=ingredient.get('id'),
-                amount=ingredient.get('amount')
-            )
-            new_ingredients.append(adding_ingredient)
-        IngredientAmount.objects.bulk_create(new_ingredients)
+                amount=ingredient.get('amount'))
+        return instance
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
