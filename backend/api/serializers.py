@@ -14,13 +14,13 @@ User = get_user_model()
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ('id', 'name', 'color', 'slug')
+        fields = '__all__'
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ('id', 'name', 'measurement_unit')
+        fields = '__all__'
 
 
 class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
@@ -29,7 +29,7 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientAmount
-        fields = ('id', 'ingredient', 'amount')
+        fields = ['id', 'ingredient', 'amount']
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -153,7 +153,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         instance.tags.clear()
         ingredients = validated_data.pop('ingredients')
         tags = self.initial_data.get('tags')
-        instance = self.__add_tags_ingredients(
+        instance = self.add_tags_ingredients(
             instance, ingredients=ingredients, tags=tags)
         return super().update(instance, validated_data)
 
