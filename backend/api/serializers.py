@@ -1,9 +1,12 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.db.models import F
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from rest_framework.response import Response
 
 from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
 from users.models import Follow
@@ -14,13 +17,13 @@ User = get_user_model()
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = '__all__'
+        fields = ('id', 'name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = '__all__'
+        fields = ('id', 'name', 'measurement_unit')
 
 
 class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
@@ -29,7 +32,7 @@ class AddIngredientToRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = IngredientAmount
-        fields = ['id', 'ingredient', 'amount']
+        fields = ('id', 'ingredient', 'amount')
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -181,6 +184,19 @@ class FollowSerializer(serializers.ModelSerializer):
         model = Follow
         fields = ('id', 'email', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
+
+    def validate(self, data):
+        user = data['user']
+        author = data['author']
+        if user == author:
+            return Response({
+                'errors': 'Ошибка подписки, нельзя подписываться на самого себя'},
+                status=HTTPStatus.BAD_REQUEST)
+        if Follow.objects.filter(user=user, author=author).exists():
+            return Response({
+                'errors': 'Ошибка подписки, вы уже подписаны на этого пользователя'},
+                status=HTTPStatus.BAD_REQUEST)
+        return data
 
     def get_is_subscribed(self, obj):
         return Follow.objects.filter(
