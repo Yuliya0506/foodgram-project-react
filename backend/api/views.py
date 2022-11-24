@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
@@ -10,15 +11,19 @@ from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import (Cart, Favorite, Ingredient, IngredientAmount,
-                            Recipe, Tag)
+from recipes.models import (
+    Cart, Favorite, Ingredient, IngredientAmount,
+    Recipe, Tag
+)
 from users.models import Follow
 from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
-from .serializers import (FollowSerializer, IngredientSerializer,
-                          RecipeReadSerializer, RecipeWriteSerializer,
-                          ShortRecipeSerializer, TagSerializer)
+from .serializers import (
+    FollowSerializer, IngredientSerializer, RecipeReadSerializer,
+    RecipeWriteSerializer, ShortRecipeSerializer, TagSerializer
+)
+from .services import generate_shop_cart
 
 User = get_user_model()
 
@@ -60,7 +65,7 @@ class FollowViewSet(UserViewSet):
         return Response(serializer.data, status=HTTPStatus.CREATED)
 
     @subscribe.mapping.delete
-    def del_subscribe(self, request, id=None):
+    def unsubscribe(self, request, id=None):
         user = request.user
         author = get_object_or_404(User, id=id)
         if user == author:
@@ -89,7 +94,6 @@ class FollowViewSet(UserViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
     pagination_class = LimitPageNumberPagination
     filter_class = RecipeFilter
     permission_classes = (AdminUserOrReadOnly,)
@@ -98,9 +102,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.method in SAFE_METHODS:
             return RecipeReadSerializer
         return RecipeWriteSerializer
-
-    # def perform_create(self, serializer):
-    #     serializer.save(author=self.request.user)
 
     def get_queryset(self):
         user = self.request.user
@@ -134,13 +135,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
-        return self.add_obj(Cart, request.user, pk)
+        return self.__add_obj(Cart, request.user, pk)
 
     @shopping_cart.mapping.delete
     def del_from_shopping_cart(self, request, pk=None):
-        return self.delete_obj(Cart, request.user, pk)
+        return self.__delete_obj(Cart, request.user, pk)
 
-    def add_obj(self, model, user, pk):
+    @staticmethod
+    def __add_obj(model, user, pk):
         if model.objects.filter(user=user, recipe__id=pk).exists():
             return Response({
                 'errors': 'Ошибка добавления рецепта в список'
@@ -150,7 +152,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer = ShortRecipeSerializer(recipe)
         return Response(serializer.data, status=HTTPStatus.CREATED)
 
-    def delete_obj(self, model, user, pk):
+    @staticmethod
+    def __delete_obj(model, user, pk):
         obj = model.objects.filter(user=user, recipe__id=pk)
         if obj.exists():
             obj.delete()
@@ -166,13 +169,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe__cart__user=request.user).values(
             'ingredients__name',
             'ingredients__measurement_unit').annotate(total=Sum('amount'))
-
-        shopping_cart = '\n'.join([
-            f'{ingredient["ingredients__name"]} - {ingredient["total"]} '
-            f'{ingredient["ingredients__measurement_unit"]}'
-            for ingredient in ingredients
-        ])
-        filename = 'shopping_cart.txt'
+        shopping_cart = generate_shop_cart(ingredients)
         response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={filename}'
+        response['Content-Disposition'] = f'attachment; {settings.FILENAME}'
         return response
