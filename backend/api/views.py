@@ -45,6 +45,7 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
 class FollowViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
+    queryset = User.objects.all()
     pagination_class = LimitPageNumberPagination
 
     @action(
