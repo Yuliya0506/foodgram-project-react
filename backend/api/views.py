@@ -53,6 +53,8 @@ class FollowViewSet(UserViewSet):
         author = get_object_or_404(User, id=id)
         follow = Follow.objects.create(user=user, author=author)
         serializer = FollowSerializer(follow, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data, status=HTTPStatus.CREATED)
 
     @subscribe.mapping.delete
