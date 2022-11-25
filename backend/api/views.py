@@ -20,8 +20,9 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
 from .serializers import (
-    FollowSerializer, IngredientSerializer, RecipeReadSerializer,
-    RecipeWriteSerializer, ShortRecipeSerializer, TagSerializer
+    CustomUserSerializer, FollowSerializer, IngredientSerializer,
+    RecipeReadSerializer, RecipeWriteSerializer, ShortRecipeSerializer,
+    TagSerializer
 )
 from .services import generate_shop_cart
 
@@ -43,7 +44,7 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class FollowViewSet(UserViewSet):
-    serializer_class = FollowSerializer
+    serializer_class = CustomUserSerializer
     pagination_class = LimitPageNumberPagination
 
     @action(
@@ -66,19 +67,20 @@ class FollowViewSet(UserViewSet):
         return self.unsubscribe(user, author)
 
     @staticmethod
-    def unsubscribe(self, request, id=None):
-        user = request.user
-        author = get_object_or_404(User, id=id)
+    def unsubscribe(user, author):
         if user == author:
             return Response(
-                {'errors':
-                    'Ошибка отписки, нельзя отписываться от самого себя'},
-                status=HTTPStatus.BAD_REQUEST)
+                {'errors': 'Вы не можете отписываться от самого себя'},
+                status=HTTPStatus.BAD_REQUEST
+            )
         follow = Follow.objects.filter(user=user, author=author)
-        if not follow.exists():
-            return Response({
-                'errors': 'Ошибка отписки, вы уже отписались'},
-                status=HTTPStatus.BAD_REQUEST)
+        if follow.exists():
+            follow.delete()
+            return Response(status=HTTPStatus.NO_CONTENT)
+        return Response(
+            {'errors': 'Вы не подписаны на данного автора'},
+            status=HTTPStatus.BAD_REQUEST
+        )
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
