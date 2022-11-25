@@ -91,6 +91,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         fields = ('author', 'tags', 'ingredients', 'name',
                   'image', 'text', 'cooking_time')
 
+    def get_ingredients(self, obj):
+        return obj.ingredients.values(
+            'id', 'name', 'measurement_unit', amount=F('recipe__amount')
+        )
+
     def validate(self, data):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
