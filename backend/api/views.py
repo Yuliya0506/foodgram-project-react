@@ -47,17 +47,25 @@ class FollowViewSet(UserViewSet):
     pagination_class = LimitPageNumberPagination
 
     @action(
-        methods=['post'], detail=True, permission_classes=[IsAuthenticated])
+        methods=['post', 'delete'], detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
+        if request.method == 'POST':
+            data = {'user': request.user.id, 'author': id}
+            serializer = FollowSerializer(
+                data=data,
+                context={'request': request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(
+                serializer.data,
+                status=HTTPStatus.CREATED
+            )
         user = request.user
         author = get_object_or_404(User, id=id)
-        follow = Follow.objects.create(user=user, author=author)
-        serializer = FollowSerializer(follow, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=HTTPStatus.CREATED)
+        return self.unsubscribe(user, author)
 
-    @subscribe.mapping.delete
+    @staticmethod
     def unsubscribe(self, request, id=None):
         user = request.user
         author = get_object_or_404(User, id=id)
@@ -71,8 +79,6 @@ class FollowViewSet(UserViewSet):
             return Response({
                 'errors': 'Ошибка отписки, вы уже отписались'},
                 status=HTTPStatus.BAD_REQUEST)
-        follow.delete()
-        return Response(status=HTTPStatus.NO_CONTENT)
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
