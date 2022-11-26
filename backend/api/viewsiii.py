@@ -20,9 +20,8 @@ from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import LimitPageNumberPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
 from .serializers import (
-    CustomUserSerializer, FollowSerializer, IngredientSerializer,
-    RecipeReadSerializer, RecipeWriteSerializer, ShortRecipeSerializer,
-    TagSerializer
+    FollowSerializer, IngredientSerializer, RecipeReadSerializer,
+    RecipeWriteSerializer, ShortRecipeSerializer, TagSerializer
 )
 from .services import generate_shop_cart
 
@@ -44,35 +43,30 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class FollowViewSet(UserViewSet):
-    serializer_class = CustomUserSerializer
-    queryset = User.objects.all()
     pagination_class = LimitPageNumberPagination
 
     @action(
-        methods=['post', 'delete'], detail=True, permission_classes=[IsAuthenticated])
+        methods=['post'], detail=True, permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
         user = request.user
         author = get_object_or_404(User, id=id)
+        follow = Follow.objects.create(user=user, author=author)
+        serializer = FollowSerializer(follow, context={'request': request})
+        return Response(serializer.data, status=HTTPStatus.CREATED)
 
-        if request.method == 'POST':
-            follow = Follow.objects.create(
-                user=user,
-                author=author
-            )
-            serializer = FollowSerializer(
-                follow,
-                context={'request': request}
-            )
-            return Response(serializer.data, status=HTTPStatus.CREATED)
-
-        if request.method == 'DELETE':
-            follow = get_object_or_404(
-                Follow,
-                user=user,
-                author=author
-            )
-            follow.delete()
+    @subscribe.mapping.delete
+    def unsubscribe(self, request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        subscription = Follow.objects.filter(
+            user=request.user, author=user
+        )
+        if subscription.exists():
+            subscription.delete()
             return Response(status=HTTPStatus.NO_CONTENT)
+        return Response(
+            {'errors': 'Вы не подписаны на данного автора'},
+            status=HTTPStatus.HTTP_400_BAD_REQUEST
+        )
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
@@ -119,11 +113,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
-        return self.__add_obj(Favorite, request.user, pk)
+        return self.add_obj(Favorite, request.user, pk)
 
     @favorite.mapping.delete
     def del_from_favorite(self, request, pk=None):
-        return self.__delete_obj(Favorite, request.user, pk)
+        return self.delete_obj(Favorite, request.user, pk)
 
     @action(detail=True, methods=['post'],
             permission_classes=[IsAuthenticated])
