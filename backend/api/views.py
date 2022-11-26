@@ -162,7 +162,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ingredients = IngredientAmount.objects.filter(
             recipe__cart__user=request.user).values(
             'ingredients__name',
-            'ingredients__measurement_unit').annotate(total=Sum('amount'))
+            'ingredients__measurement_unit').annotate(amount=Sum('amount'))
         today = datetime.today()
         shopping_cart = (
             f'Список покупок для: {user.get_full_name()}\n\n'
@@ -174,6 +174,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             f' - {ingredient["amount"]}'
             for ingredient in ingredients
         ])
+        shopping_cart += f'\n\nFoodgram ({today:%Y})'
         filename = 'shopping_cart.txt'
         response = HttpResponse(shopping_cart, content_type='text/plain')
         response['Content-Disposition'] = f'attachment; filename={filename}'
