@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
@@ -13,7 +11,7 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
 from recipes.models import (
-    Cart, Favorite, Ingredient, IngredientAmount,
+    Cart, Favorite, Ingredient,
     Recipe, Tag
 )
 from users.models import Follow
@@ -25,6 +23,7 @@ from .serializers import (
     RecipeReadSerializer, RecipeWriteSerializer, ShortRecipeSerializer,
     TagSerializer
 )
+from .services import generate_shop_list
 
 User = get_user_model()
 
@@ -155,27 +154,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'errors': 'Ошибка удаления рецепта из списка'
         }, status=HTTPStatus.BAD_REQUEST)
 
-    @action(
-        detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        user = request.user
-        ingredients = IngredientAmount.objects.filter(
-            recipe__cart__user=request.user).values(
-            'ingredients__name',
-            'ingredients__measurement_unit').annotate(amount=Sum('amount'))
-        today = datetime.today()
-        shopping_cart = (
-            f'Список покупок для: {user.get_full_name()}\n\n'
-            f'Дата: {today:%Y-%m-%d}\n\n'
-        )
-        shopping_cart += '\n'.join([
-            f'- {ingredient["ingredient__name"]} '
-            f'({ingredient["ingredient__measurement_unit"]})'
-            f' - {ingredient["amount"]}'
-            for ingredient in ingredients
-        ])
-        shopping_cart += f'\n\nFoodgram ({today:%Y})'
-        filename = 'shopping_cart.txt'
-        response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={filename}'
-        return response
+        shop_list = generate_shop_list(request.user)
+        return HttpResponse(shop_list, content_type='text/plain')
