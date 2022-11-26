@@ -32,9 +32,9 @@ DB_PORT                 # 5432 (порт по умолчанию)
 ````
 
 * Клонировать репозиторий:
-`git clone git@github.com:Yuliya0506/foodgram-project-react.git
+`git clone git@github.com:Yuliya0506/foodgram-project-react.git`
 * Подключаемся к серверу
-`ssh <server user>@<public server IP>
+`ssh <server user>@<public server IP>`
 * Устанавливаем докер
 `sudo apt install docker.io
 * Устанавливаем Docker-Compose (для Linux)
