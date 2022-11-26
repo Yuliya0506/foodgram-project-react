@@ -1,7 +1,6 @@
 from http import HTTPStatus
 
 from django.db.models import Sum
-from rest_framework import status
 from rest_framework.response import Response
 
 from recipes.models import IngredientAmount
