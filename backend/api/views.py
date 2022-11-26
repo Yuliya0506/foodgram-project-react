@@ -2,7 +2,6 @@ from datetime import datetime
 
 from http import HTTPStatus
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
