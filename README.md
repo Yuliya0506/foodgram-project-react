@@ -38,27 +38,27 @@ DB_PORT                 # 5432 (порт по умолчанию)
 git clone git@github.com:Yuliya0506/foodgram-project-react.git
 ````
 
-* Подключаемся к серверу
+* Подключиться к серверу
 ````
 ssh <server user>@<public server IP>
 ````
 
-* Устанавливаем докер
+* Устанавить докер
 ````
 sudo apt install docker.io
 ````
 
-* Устанавливаем Docker-Compose (для Linux)
+* Установить Docker-Compose (для Linux)
 ````
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 ````
 
-* Получаем права для docker-compose
+* Получить права для docker-compose
 ````
 sudo chmod +x /usr/local/bin/docker-compose
 ````
 
-* Загружаем файлы docker-compose.yaml и nginx.conf на сервер, сделать это можно командой (в случае удаленного запуска)
+* Загрузить файлы docker-compose.yaml и nginx.conf на сервер, сделать это можно командой (в случае удаленного запуска)
 ````
 scp docker-compose.yaml <username>@<public ip adress>:/home/<username>/docker-compose.yaml
 ````
