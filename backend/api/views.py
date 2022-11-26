@@ -55,9 +55,8 @@ class FollowViewSet(UserViewSet):
         author = get_object_or_404(User, id=id)
 
         if request.method == 'POST':
+            follow = Follow.objects.create(user=user, author=author)
             serializer = FollowSerializer(follow, context={'request': request})
-            serializer.is_valid(raise_exception=True)
-            Follow.objects.create(user=user, author=author)
             return Response(serializer.data, status=HTTPStatus.CREATED)
 
         if request.method == 'DELETE':
