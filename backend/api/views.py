@@ -1,7 +1,7 @@
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
-from django.db.models import BooleanField, Exists, OuterRef, Value
+from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
@@ -11,7 +11,7 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 
 from recipes.models import (
-    Cart, Favorite, Ingredient,
+    Cart, Favorite, Ingredient, IngredientAmount,
     Recipe, Tag
 )
 from users.models import Follow
@@ -23,7 +23,6 @@ from .serializers import (
     RecipeReadSerializer, RecipeWriteSerializer, ShortRecipeSerializer,
     TagSerializer
 )
-from .services import generate_shop_list
 
 User = get_user_model()
 
@@ -154,7 +153,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'errors': 'Ошибка удаления рецепта из списка'
         }, status=HTTPStatus.BAD_REQUEST)
 
-    @action(detail=False, permission_classes=[IsAuthenticated])
+    @action(
+        detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        shop_list = generate_shop_list(request.user)
-        return HttpResponse(shop_list, content_type='text/plain')
+        ingredients = IngredientAmount.objects.filter(
+            recipe__cart__user=request.user).values(
+            'ingredients__name',
+            'ingredients__measurement_unit').annotate(total=Sum('amount'))
+
+        shopping_cart = '\n'.join([
+            f'{ingredient["ingredients__name"]} - {ingredient["total"]} '
+            f'{ingredient["ingredients__measurement_unit"]}'
+            for ingredient in ingredients
+        ])
+        filename = 'shopping_cart.txt'
+        response = HttpResponse(shopping_cart, content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={filename}'
+        return response
