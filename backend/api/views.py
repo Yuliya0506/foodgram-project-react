@@ -55,14 +55,22 @@ class FollowViewSet(UserViewSet):
         author = get_object_or_404(User, id=id)
 
         if request.method == 'POST':
-            follow = Follow.objects.create(user=user, author=author)
-            serializer = FollowSerializer(follow, context={'request': request})
+            follow = Follow.objects.create(
+                user=user,
+                author=author
+            )
+            serializer = FollowSerializer(
+                follow,
+                context={'request': request}
+            )
             return Response(serializer.data, status=HTTPStatus.CREATED)
 
         if request.method == 'DELETE':
-            follow = get_object_or_404(Follow,
-                                       user=user,
-                                       author=author)
+            follow = get_object_or_404(
+                Follow,
+                user=user,
+                author=author
+            )
             follow.delete()
             return Response(status=HTTPStatus.NO_CONTENT)
 
