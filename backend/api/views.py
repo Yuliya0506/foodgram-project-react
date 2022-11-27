@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from http import HTTPStatus
 
 from django.conf import settings
