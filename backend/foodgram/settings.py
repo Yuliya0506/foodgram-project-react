@@ -137,4 +137,4 @@ DJOSER = {
     }
 }
 
-FILENAME = 'shopping_list.txt'
+FILENAME = 'shopping_cart.txt'
