@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from http import HTTPStatus
 
 from django.conf import settings
@@ -24,7 +26,6 @@ from .serializers import (
     RecipeReadSerializer, RecipeWriteSerializer, ShortRecipeSerializer,
     TagSerializer
 )
-from .services import generate_shop_cart
 
 User = get_user_model()
 
@@ -156,13 +157,35 @@ class RecipeViewSet(viewsets.ModelViewSet):
         }, status=HTTPStatus.BAD_REQUEST)
 
     @action(
-        detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+        detail=False,
+        permission_classes=[IsAuthenticated]
+    )
     def download_shopping_cart(self, request):
+        user = request.user
+        if not user.shopping_cart.exists():
+            return Response(status=HTTPStatus.REQUEST)
+
         ingredients = IngredientAmount.objects.filter(
-            recipe__cart__user=request.user).values(
-            'ingredients__name',
-            'ingredients__measurement_unit').annotate(amount=Sum('amount'))
-        shopping_cart = generate_shop_cart(ingredients)
-        response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; {settings.FILENAME}'
+            recipe__shopping_cart__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount'))
+
+        today = datetime.today()
+        shopping_list = (
+            f'Список покупок для: {user.get_full_name()}\n\n'
+            f'Дата: {today:%Y-%m-%d}\n\n'
+        )
+        shopping_list += '\n'.join([
+            f'- {ingredient["ingredient__name"]} '
+            f'({ingredient["ingredient__measurement_unit"]})'
+            f' - {ingredient["amount"]}'
+            for ingredient in ingredients
+        ])
+        shopping_list += f'\n\nFoodgram ({today:%Y})'
+
+        response = HttpResponse(shopping_list, content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={settings.FILENAME}'
+
         return response
