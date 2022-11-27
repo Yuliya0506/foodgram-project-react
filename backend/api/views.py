@@ -157,9 +157,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         }, status=HTTPStatus.BAD_REQUEST)
 
     @action(
-        detail=False,
-        permission_classes=[IsAuthenticated]
-    )
+        detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
         ingredients = IngredientAmount.objects.filter(
