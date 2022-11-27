@@ -115,7 +115,10 @@ class IngredientAmount(models.Model):
         ]
 
     def __str__(self):
-        return f'{self.ingredients.name} - {self.amount}'
+        return (
+            f'{self.ingredient.name} ({self.ingredient.measurement_unit})'
+            f' - {self.amount} '
+        )
 
 
 class Cart(models.Model):
