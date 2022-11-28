@@ -1,5 +1,6 @@
+from http import HTTPStatus
+
 from django.db.models import Sum
-from rest_framework import status
 from rest_framework.response import Response
 
 from recipes.models import IngredientAmount
@@ -13,7 +14,7 @@ def generate_shop_list(user):
     ).annotate(Sum('amount'))
     if not ingredients:
         return Response({'error': 'Ваша корзина пуста'},
-                        status=status.HTTP_400_BAD_REQUEST)
+                        status=HTTPStatus.BAD_REQUEST)
     shop_list = {}
     for item in ingredients:
         name = item['ingredients__name']

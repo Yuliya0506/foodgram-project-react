@@ -136,5 +136,3 @@ DJOSER = {
         'user_list': ('rest_framework.permissions.AllowAny',)
     }
 }
-
-FILENAME = 'shopping_cart.txt'
