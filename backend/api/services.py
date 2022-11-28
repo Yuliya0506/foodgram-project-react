@@ -7,7 +7,7 @@ from recipes.models import IngredientAmount
 
 def generate_shop_list(user):
     ingredients = IngredientAmount.objects.filter(
-        recipe__carts__user=user).values(
+        recipe__cart__user=user).values(
             'ingredients__name',
             'ingredients__measurement_unit',
     ).annotate(Sum('amount'))
