@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from http import HTTPStatus
 
 from django.contrib.auth import get_user_model
@@ -25,6 +23,7 @@ from .serializers import (
     RecipeReadSerializer, RecipeWriteSerializer, ShortRecipeSerializer,
     TagSerializer
 )
+from .services import generate_shop_list
 
 User = get_user_model()
 
@@ -155,34 +154,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'errors': 'Ошибка удаления рецепта из списка'
         }, status=HTTPStatus.BAD_REQUEST)
 
-    @action(
-        detail=False,
-        permission_classes=[IsAuthenticated]
-    )
+    @action(detail=False, permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
-        user = request.user
-        ingredients = IngredientAmount.objects.filter(
-            recipe__cart__user=request.user
-        ).values(
-            'ingredients__name',
-            'ingredients__measurement_unit'
-        ).annotate(amount=Sum('amount'))
-
-        today = datetime.today()
-        shopping_list = (
-            f'Список покупок для: {user.get_full_name()}\n\n'
-            f'Дата: {today:%Y-%m-%d}\n\n'
-        )
-        shopping_list += '\n'.join([
-            f'- {ingredient["ingredients__name"]} '
-            f'({ingredient["ingredients__measurement_unit"]})'
-            f' - {ingredient["amount"]}'
-            for ingredient in ingredients
-        ])
-        shopping_list += f'\n\nFoodgram ({today:%Y})'
-
-        filename = f'{user.username}_shopping_list.txt'
-        response = HttpResponse(shopping_list, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={filename}'
-
-        return response
+        shop_list = generate_shop_list(request.user)
+        return HttpResponse(shop_list, content_type='text/plain')
