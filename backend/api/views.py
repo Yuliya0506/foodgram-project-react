@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from http import HTTPStatus
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
@@ -156,17 +159,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
         detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
+        user = request.user
         ingredients = IngredientAmount.objects.filter(
-            recipe__cart__user=request.user).values(
-            'ingredients__name',
-            'ingredients__measurement_unit').annotate(total=Sum('amount'))
+            recipe__cart__user=request.user
+        ).values(
+            'ingredient__name',
+            'ingredient__measurement_unit'
+        ).annotate(amount=Sum('amount'))
 
-        shopping_cart = '\n'.join([
-            f'{ingredient["ingredients__name"]} - {ingredient["total"]} '
-            f'{ingredient["ingredients__measurement_unit"]}'
+        today = datetime.today()
+        shopping_list = (
+            f'Список покупок для: {user.username()}\n\n'
+            f'Дата: {today:%Y-%m-%d}\n\n'
+        )
+        shopping_list += '\n'.join([
+            f'- {ingredient["ingredient__name"]} '
+            f'({ingredient["ingredient__measurement_unit"]})'
+            f' - {ingredient["amount"]}'
             for ingredient in ingredients
         ])
-        filename = 'shopping_cart.txt'
-        response = HttpResponse(shopping_cart, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename={filename}'
+        shopping_list += f'\n\nFoodgram ({today:%Y})'
+
+        response = HttpResponse(shopping_list, content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; {settings.FILENAME}'
+
         return response
