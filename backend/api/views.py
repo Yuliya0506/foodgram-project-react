@@ -2,7 +2,6 @@ from datetime import datetime
 
 from http import HTTPStatus
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import BooleanField, Exists, OuterRef, Sum, Value
 from django.http import HttpResponse
@@ -180,7 +179,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ])
         shopping_list += f'\n\nFoodgram ({today:%Y})'
 
+        filename = f'{user.username}_shopping_list.txt'
         response = HttpResponse(shopping_list, content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; {settings.FILENAME}'
+        response['Content-Disposition'] = f'attachment; filename={filename}'
 
         return response
