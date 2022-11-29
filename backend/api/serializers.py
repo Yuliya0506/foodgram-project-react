@@ -159,6 +159,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             instance, ingredients=ingredients, tags=tags)
         return super().update(instance, validated_data)
 
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        context = {'request': request}
+        return RecipeReadSerializer(instance,
+                                    context=context).data
+
 
 class ShortRecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
