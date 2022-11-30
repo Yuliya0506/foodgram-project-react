@@ -103,7 +103,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
-            if type(ingredient.get('amount')) is str:
+            if isinstance(ingredient.get('amount'), str):
                 if not ingredient.get('amount').isdigit():
                     raise serializers.ValidationError(
                         'Количество ингредиента должно быть числом'
