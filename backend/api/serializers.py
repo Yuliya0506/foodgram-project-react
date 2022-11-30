@@ -98,7 +98,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         ingredients = data.get('ingredients', None)
         ingredients_set = set()
         for ingredient in ingredients:
-            if type(ingredient.get('amount')) is str:
+            if isinstance(ingredient.get('amount'), str):
                 if not ingredient.get('amount').isdigit():
                     raise serializers.ValidationError(
                         'Количество ингредиента должно быть числом'
@@ -127,15 +127,12 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
         for tag in tags:
             instance.tags.add(tag)
 
-        new_ingredients = []
         for ingredient in ingredients:
-            adding_ingredient = IngredientAmount(
+            IngredientAmount.objects.create(
                 recipe=instance,
                 ingredients_id=ingredient.get('id'),
-                amount=ingredient.get('amount')
-            )
-            new_ingredients.append(adding_ingredient)
-        IngredientAmount.objects.bulk_create(new_ingredients)
+                amount=ingredient.get('amount'))
+        return instance
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
